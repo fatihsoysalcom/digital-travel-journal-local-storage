@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WanderJournal: Digital Travel Journal</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+        h2 { color: #34495e; margin-top: 25px; margin-bottom: 15px; }
+        .entry-form label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .entry-form textarea, .entry-form input[type="file"] { width: calc(100% - 20px); padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .entry-form button { background-color: #3498db; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .entry-form button:hover { background-color: #2980b9; }
+        #entries-list { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        .journal-entry { background-color: #ecf0f1; border: 1px solid #dde; padding: 15px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .journal-entry p { margin-bottom: 10px; line-height: 1.6; }
+        .journal-entry img { max-width: 100%; height: auto; display: block; margin-top: 10px; border-radius: 4px; }
+        .entry-date { font-size: 0.9em; color: #7f8c8d; margin-bottom: 10px; }
+        #image-preview { max-width: 150px; max-height: 150px; margin-top: 10px; border: 1px solid #ddd; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WanderJournal: Dijital Seyahat Günlüğü</h1>
+
+        <div class="entry-form">
+            <h2>Yeni Günlük Girişi</h2>
+            <label for="entryText">Anılarınız:</label>
+            <textarea id="entryText" rows="6" placeholder="Bugün neler yaşadınız?"></textarea>
+
+            <label for="entryImage">Fotoğraf Ekle:</label>
+            <input type="file" id="entryImage" accept="image/*">
+            <img id="image-preview" src="#" alt="Image Preview">
+            <br>
+            <button id="addEntryBtn">Giriş Ekle</button>
+        </div>
+
+        <div id="entries-list">
+            <h2>Geçmiş Anılar</h2>
+            <!-- Journal entries will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        const entryText = document.getElementById('entryText');
+        const entryImage = document.getElementById('entryImage');
+        const imagePreview = document.getElementById('image-preview');
+        const addEntryBtn = document.getElementById('addEntryBtn');
+        const entriesList = document.getElementById('entries-list');
+
+        let journalEntries = []; // Array to hold all journal entries
+
+        // --- Multimedia Content Handling (Image Preview) ---
+        entryImage.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block'; // Show preview
+                };
+                reader.readAsDataURL(file); // Read file as a data URL
+            } else {
+                imagePreview.src = '#';
+                imagePreview.style.display = 'none'; // Hide preview if no file
+            }
+        });
+
+        // --- Load Entries from Local Storage on Page Load ---
+        function loadEntries() {
+            // The article emphasizes persistence and accessibility.
+            // localStorage provides a simple client-side persistence mechanism.
+            const storedEntries = localStorage.getItem('wanderJournalEntries');
+            if (storedEntries) {
+                journalEntries = JSON.parse(storedEntries);
+            }
+            displayEntries();
+        }
+
+        // --- Save Entries to Local Storage ---
+        function saveEntries() {
+            // Saving entries to localStorage ensures they are not lost
+            // when the browser is closed, mimicking a persistent digital journal.
+            localStorage.setItem('wanderJournalEntries', JSON.stringify(journalEntries));
+        }
+
+        // --- Display All Entries ---
+        function displayEntries() {
+            entriesList.innerHTML = '<h2>Geçmiş Anılar</h2>'; // Clear previous entries
+            if (journalEntries.length === 0) {
+                entriesList.innerHTML += '<p>Henüz bir anı eklemediniz.</p>';
+                return;
+            }
+
+            // Display entries in reverse chronological order
+            journalEntries.slice().reverse().forEach(entry => {
+                const entryDiv = document.createElement('div');
+                entryDiv.classList.add('journal-entry');
+
+                const date = new Date(entry.timestamp).toLocaleString('tr-TR', {
+                    year: 'numeric', month: 'long', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+
+                entryDiv.innerHTML = `
+                    <div class="entry-date">${date}</div>
+                    <p>${entry.text.replace(/\n/g, '<br>')}</p>
+                    ${entry.image ? `<img src="${entry.image}" alt="Journal Image">` : ''}
+                `;
+                entriesList.appendChild(entryDiv);
+            });
+        }
+
+        // --- Add New Entry ---
+        addEntryBtn.addEventListener('click', function() {
+            const text = entryText.value.trim();
+            const image = imagePreview.src !== '#' && imagePreview.style.display === 'block' ? imagePreview.src : null;
+
+            if (text || image) {
+                // This demonstrates the ability to capture both text and multimedia (image data URL).
+                // The article highlights the advantage of multimedia content in digital journals.
+                const newEntry = {
+                    text: text,
+                    image: image, // Storing image as Data URL for single-file example
+                    timestamp: new Date().toISOString()
+                };
+                journalEntries.push(newEntry);
+                saveEntries(); // Persist the new entry
+                displayEntries(); // Update the UI
+
+                // Clear form fields
+                entryText.value = '';
+                entryImage.value = '';
+                imagePreview.src = '#';
+                imagePreview.style.display = 'none';
+            } else {
+                alert('Lütfen bir metin veya fotoğraf ekleyin.');
+            }
+        });
+
+        // Initial load of entries when the page loads
+        loadEntries();
+    </script>
+</body>
+</html>
